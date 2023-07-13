@@ -448,9 +448,9 @@ public class Jav1Encoder
 		this.statusListener = statusListener;
 
 		boolean isGpuDecoding = false; //set this to true to decode using gpu
-		boolean canDoSharpening = true; //set this to true to do sharpening
-		boolean canDoEdgeSharpening = true; //set this to true to do edge sharpening
-		boolean isCopyAudio = true; //set this to false to encode audio
+		boolean canDoSharpening = false; //set this to true to do sharpening, default do not sharpen
+		boolean canDoEdgeSharpening = false; //set this to true to do edge sharpening, some errors in the edge sharpening, need to fix
+		boolean isCopyAudio = false; //set this to false to encode audio
 
 		String pixelFormat = "p010le"; //yuv420p for SDR //change to p010le for 10 bit HDR
 		String fps = "59.940"; //change to 60 or 30 however feels right
