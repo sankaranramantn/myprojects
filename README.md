@@ -66,13 +66,19 @@ ffmpeg -version
 
 Windows: Add the bin path to your PATH environment variable as follows
 
-3.3.2.1 Launch explorer using Windows + E 
-3.3.2.2 Right click This PC and select Properties
-3.3.2.3 Choose Advanced system settings
-3.3.2.4 Select Advanced tab in the launched window
-3.3.2.5 Press Environmental Variables... button
-3.3.2.6 Double click Path and paste the path of bin folder you saw in unzipping section, press Ok
-3.3.2.7 Verify the environment variable by launching a CMD or Terminal and running following command
+3.3.2.1 Launch explorer using Windows + E <br/>
+
+3.3.2.2 Right click This PC and select Properties <br/>
+
+3.3.2.3 Choose Advanced system settings <br/>
+
+3.3.2.4 Select Advanced tab in the launched window <br/>
+
+3.3.2.5 Press Environmental Variables... button <br/>
+
+3.3.2.6 Double click Path and paste the path of bin folder you saw in unzipping section, press Ok <br/>
+
+3.3.2.7 Verify the environment variable by launching a CMD or Terminal and running following command <br/>
 
 ffmpeg -version
 
