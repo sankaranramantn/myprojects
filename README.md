@@ -1,12 +1,10 @@
 # myprojects
 
-Description
+Java AV1/Hevc Transcoder GUI Wrapper above ffmpeg
 
 Converts any ffmpeg supported mp4/mkv into AV1 using Nvidia 40 series av1_nvenc encoder, code can be modified to use hevc_nvenc or any AMF/qsv encoders
 
-Java AV1/Hevc Transcoder GUI Wrapper above ffmpeg
-
-Install ffmpeg on your computer, your computer also needs JDK as this GUI is written in Java Swing
+Prerequisites: Install ffmpeg on your computer, your computer also needs JDK as this GUI is written in Java Swing
 
 Setup Instructions:
 --------------------------------------------------------------------
