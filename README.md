@@ -43,7 +43,7 @@ For example, ffmpeg 6 lgpl windows 64 bit link: https://github.com/BtbN/FFmpeg-B
 
 Unzip the downloaded ffmpeg, for example if your download was inside Downloads and you had unzipped, the path might be like as follows, in the following substitute your username in place of &lt;Your Username&gt;
 
-C:\Users\&lt;Your Username&gt;\Downloads\ffmpeg-n6.0-latest-win64-lgpl-6.0
+C:\Users\\&lt;Your Username&gt;\Downloads\ffmpeg-n6.0-latest-win64-lgpl-6.0
 
 
 ********************************************************************
