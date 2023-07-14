@@ -106,7 +106,7 @@ You can also open Visual Studio Code, File -> Open Folder... --> Chose myproject
 6. Run the project
 --------------------------------------------------------------------
 
-From the left side toolbar, choose Run and Debug, this should launch the transcoder
+From the left side toolbar, choose Run and Debug (if you want to customize you can create a launch.json, however just click Run and Debug), this should launch the transcoder
 
 --------------------------------------------------------------------
 7. Transcode
