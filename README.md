@@ -35,9 +35,9 @@ Global Link for any platform: https://ffmpeg.org/download.html
 
 Recommended BtbN as this ffmpeg has latest Nvidia and AMD encoders built: https://github.com/BtbN/FFmpeg-Builds/releases
 
-From this release, choose an lgpl release with version 6 (version 6 is the latest stable release version of ffmpeg, do not choose master which is a development branch version)
+From this release, choose an lgpl release with nvenc/amf/qsv support which is built in latest
 
-For example, ffmpeg 6 lgpl windows 64 bit link: https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n6.0-latest-win64-lgpl-6.0.zip
+For example, ffmpeg 6 lgpl windows 64 bit link: https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-lgpl.zip
 
 ********************************************************************
 3.2 Unzip ffmpeg you downloaded
