@@ -450,15 +450,15 @@ public class Jav1Encoder
 		boolean isGpuDecoding = false; //set this to true to decode using gpu
 		boolean canDoSharpening = false; //set this to true to do sharpening, default do not sharpen
 		boolean canDoEdgeSharpening = false; //set this to true to do edge sharpening, some errors in the edge sharpening, need to fix
-		boolean isCopyAudio = false; //set this to false to encode audio
+		boolean isCopyAudio = true; //set this to false to encode audio
 
 		String pixelFormat = "p010le"; //yuv420p for SDR //change to p010le for 10 bit HDR
 		String fps = "59.940"; //change to 60 or 30 however feels right
 		String audioBitrate = "384k"; //change to different value as needed
 		String nvidiaEncoderName = "av1_nvenc"; //change to hevc_nvenc when this is missing
 
-		String cqpValue = "24"; //lower this value, higher the quality, for av1 22 or 23 gives nice encoding
-		String maxVideoBitrate = "54M"; //increase this value for higher bitrate encoding
+		String cqpValue = "20"; //lower this value, higher the quality, for av1 22 or 23 gives nice encoding
+		String maxVideoBitrate = "67M"; //increase this value for higher bitrate encoding
 		String gopValue = "59"; //set this to sane amount, say for 30 HZ use 30, for 60 HZ use 60, 59 or 30
 		String bFramesCount = "3"; //higher the bframes better the quality, but don't go overboard with this
 		String bRefMode = (bFramesCount.equals("3") ? "2": "1"); //ref mode is middle or 2 if 3 bframes, else 1
