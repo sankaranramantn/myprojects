@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class Jav1Encoder 
 {
@@ -658,6 +659,78 @@ public class Jav1Encoder
 		init(probeSource(inputFilename), ffmpegCommand);
 	}
 
+	public Jav1Encoder(String inputFilename, String outputFilename, LinkedHashMap<String, Object> ffmpegOptions, EncoderProgressListener listener, EncoderStatusListener statusListener) throws Exception
+	{
+		this.listener = listener;
+		this.statusListener = statusListener;
+
+		boolean isGpuDecoding = (Boolean)ffmpegOptions.get("isGpuDecoding"); //set this to true to decode using gpu
+		boolean canDoSharpening = (Boolean)ffmpegOptions.get("canDoSharpening"); //set this to true to do sharpening, default do not sharpen
+		boolean canDoEdgeSharpening = false; //set this to true to do edge sharpening, some errors in the edge sharpening, need to fix
+		boolean isCopyAudio = (Boolean)ffmpegOptions.get("isCopyAudio"); //set this to false to encode audio
+
+		String pixelFormat = ffmpegOptions.get("pixelFormat").toString(); //yuv420p for SDR //change to p010le for 10 bit HDR
+		String fps = String.valueOf((Float)ffmpegOptions.get("frameRate")); //change to 60 or 30 however feels right
+		String audioCodec = ffmpegOptions.get("audioCodec").toString();
+		String audioBitrate = ffmpegOptions.get("audioBitrate").toString(); //change to different value as needed
+		String nvidiaEncoderName = ffmpegOptions.get("videoCodec").toString(); //change to hevc_nvenc when this is missing
+
+		String cqpValue = String.valueOf((Integer)ffmpegOptions.get("cq")); //lower this value, higher the quality, for av1 22 or 23 gives nice encoding
+		String maxVideoBitrate = ffmpegOptions.get("maxVideoBitrate").toString(); //increase this value for higher bitrate encoding
+		String gopValue = String.valueOf((Integer)ffmpegOptions.get("gop")); //set this to sane amount, say for 30 HZ use 30, for 60 HZ use 60, 59 or 30
+		String bFramesCount = String.valueOf(ffmpegOptions.get("bFramesCount")); //higher the bframes better the quality, but don't go overboard with this
+		String bRefMode = (bFramesCount.equals("3") ? "2": "1"); //ref mode is middle or 2 if 3 bframes, else 1
+		
+		boolean isFastEncoding = (Boolean)ffmpegOptions.get("isFastEncoding"); //if you have 40 series card, set low latency and p4 or lower to use dual av1/hevc encoder
+		String encoderPresetLevel = isFastEncoding ? "p4": ffmpegOptions.get("encoderPresetLevel").toString(); //p5 is same as slow and good quality, p6 is better quality, p4 is medium quality
+		String encoderTune =  isFastEncoding ? "ll" : ffmpegOptions.get("encoderTune").toString();
+
+		boolean enforce709Colors =  (Boolean)ffmpegOptions.get("enforce709Colors"); //set this to true to convert nvidia shadowplay encoded bt601 to bt709
+
+		boolean isMultipass = (Boolean)ffmpegOptions.get("isMultipass"); //do multipass encoding, disable this to encode faster with slightly lower quality
+		int lookaheadFrames = (Integer)ffmpegOptions.get("lookaheadFrames"); //don't give more than 32 as its useless
+
+		boolean is10bitColors = (Boolean)ffmpegOptions.get("is10bitColors"); //set this to true to make the output quality 10 bit colors and high quality
+
+		//if edge sharpening disable sharpening
+		canDoSharpening = canDoEdgeSharpening ? false : canDoSharpening;
+
+		ExecCommand ffmpegCommand = new ExecCommand("ffmpeg")
+												.add("-y")
+												.add("-hide_banner")
+												.add("-loglevel", "error")
+												.addIf(isGpuDecoding, "-hwaccel", "cuda")
+												.addIf(isGpuDecoding, "-hwaccel_output_format", "cuda")
+												.add("-i", inputFilename, true)
+												.addIf(!isGpuDecoding, "-pix_fmt", pixelFormat)
+												.addIf(canDoSharpening, "-filter:v", "fps="+fps+",unsharp=5:5:0.3:5:5:0.0", true)
+												.addIf(canDoEdgeSharpening, "-filter:v", "fps="+fps+",smartblur=1.5:-0.35:-3.5:0.65:0.25:2.0", true)
+												.addIf(!(canDoSharpening || canDoEdgeSharpening), "-filter:v", "fps="+fps, true)
+												.add("-progress", "-")
+												.addIf(isCopyAudio,"-acodec:a", "copy")
+												.addIf(!isCopyAudio, "-acodec:a", audioCodec)
+												.addIf(!isCopyAudio, "-b:a", audioBitrate)
+												.add("-movflags", "+faststart")
+												.add("-vcodec:v", nvidiaEncoderName)
+												.add("-cq:v", cqpValue)
+												.add("-maxrate:v", maxVideoBitrate)
+												.add("-g:v", gopValue)
+												.add("-bf:v", bFramesCount)
+												.add("-preset:v", encoderPresetLevel)
+												.add("-tune:v", encoderTune)
+												.addIf(enforce709Colors, "-colorspace:v", "bt709", true)
+												.addIf(enforce709Colors,"-color_primaries:v", "bt709", true)
+												.addIf(enforce709Colors, "-color_trc:v", "bt709", true)
+												.addIf(enforce709Colors, "-color_range:v", "tv", true)
+												.add("-rc:v", "vbr")
+												.addIf(isMultipass, "-multipass:v", "1")
+												.add("-rc-lookahead:v", String.valueOf(lookaheadFrames))
+												.add("-b_ref_mode:v", bRefMode)
+												.addIf(is10bitColors, "-highbitdepth:v", "true")
+												.add(outputFilename, true);
+		init(probeSource(inputFilename), ffmpegCommand);
+
+	}
 
 	public Jav1Encoder(String inputFilename, String outputFilename, EncoderProgressListener listener, EncoderStatusListener statusListener) throws Exception
 	{

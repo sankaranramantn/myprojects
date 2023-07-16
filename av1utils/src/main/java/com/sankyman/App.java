@@ -8,6 +8,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -15,6 +17,7 @@ import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.filechooser.FileSystemView;
+import javax.swing.table.TableModel;
 
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
@@ -27,7 +30,6 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-import java.net.SocketPermission;
 import java.net.URL;
 
 public class App extends JFrame implements Jav1Encoder.EncoderProgressListener, Jav1Encoder.EncoderStatusListener
@@ -40,6 +42,10 @@ public class App extends JFrame implements Jav1Encoder.EncoderProgressListener, 
     Jav1Encoder av1Encoder;
     JTextArea txtArea;
     JScrollPane txtScrollPane;
+    JSplitPane splitPaneMain;
+    JTable tblFfmpegOptions;
+    JScrollPane tableScrollPane;
+
 
     void initLookAndFeel()
     {
@@ -180,15 +186,26 @@ public class App extends JFrame implements Jav1Encoder.EncoderProgressListener, 
 
         txtArea = new JTextArea();
         txtArea.setColumns(80);
-        txtArea.setEditable(false);
+        //txtArea.setEditable(false);
         txtArea.setWrapStyleWord(true);
         txtScrollPane = new JScrollPane(txtArea);
-        getRootPane().add(txtScrollPane, BorderLayout.CENTER);
+
+
+        tblFfmpegOptions = new FfmpegOptionsTable();
+        tableScrollPane = new JScrollPane(tblFfmpegOptions);
+
+        splitPaneMain = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tableScrollPane, txtScrollPane);
+        splitPaneMain.setOneTouchExpandable(true);
+        splitPaneMain.setDividerLocation(225);
+
+        getRootPane().add(splitPaneMain, BorderLayout.CENTER);
 
         pnlButtons.setTransferHandler(handler);
         setupComponentEvents();
 
         adjustScreenSize();
+
+        tblFfmpegOptions.setFillsViewportHeight(true);
     }
 
     void appendStatus(String strStatus)
@@ -315,7 +332,18 @@ public class App extends JFrame implements Jav1Encoder.EncoderProgressListener, 
                         String fixedPath = selectedFileFinal.toString();
                         System.out.println("Fixed Path:" + fixedPath);
 
-                        av1Encoder = new Jav1Encoder(fixedPath, strOutputFilenameFinal, App.this, App.this);
+                        TableModel model = tblFfmpegOptions.getModel();
+
+                        if(model instanceof FfpmegOptions)
+                        {
+                            FfpmegOptions ffmpegOptionsModel = (FfpmegOptions)model;
+                            av1Encoder = new Jav1Encoder(fixedPath, strOutputFilenameFinal, ffmpegOptionsModel.getOptionsMap(), App.this, App.this);
+
+                        }
+                        else
+                        {
+                            av1Encoder = new Jav1Encoder(fixedPath, strOutputFilenameFinal, App.this, App.this);
+                        }
                         //scaling
                         //av1Encoder = new Jav1Encoder("\"" + selectedFileFinal.getAbsolutePath() + "\"", "\"" + strOutputFilenameFinal + "\"", "3840:2160", App.this, App.this);
                     }
