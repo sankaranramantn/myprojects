@@ -132,6 +132,7 @@ public class Jav1Encoder
 	private Process ffmpegProcess;
 	private HashMap<String, Number> srcProbedValues;
 	private ExecCommand command;
+	private float targetFrameRate = 60000 / 1001;
 
 	public void updateStatus(String strStatus)
 	{
@@ -467,27 +468,28 @@ public class Jav1Encoder
 					System.out.println("r_frame_rate missing");
 				}
 
-				//this is a temporary fix for 30 fps to 60 fps encoding, and above frame rate, this assumes 30/60/120/240 ... in between frame rate has to be supported later properly
-				if(rFrameRate <= 30)
-				{
-					int iFrameRate = (int)rFrameRate;
+				int iTargetFrameRate = (int)(Math.round(targetFrameRate));
+				int iOrigFrameRate = (int)(Math.round(rFrameRate));
 
-					int multiplier = 60 / iFrameRate;
+				//this is a temporary fix for 30 fps to 60 fps encoding, and above frame rate, this assumes 30/60/120/240 ... in between frame rate has to be supported later properly
+				if(iOrigFrameRate < iTargetFrameRate)
+				{
+
+					int multiplier = iTargetFrameRate / iOrigFrameRate;
 
 					totalFrames *= multiplier; //e.g if 30 fps is the frame rate of input file, total frames is 300, then 60 / 30 is 2, so 300 * 2 or output going to be double!
 				}
-				else if(rFrameRate <= 60)
+				else if(iOrigFrameRate > iTargetFrameRate)
+				{
+
+					int divMultiplier = iOrigFrameRate / iTargetFrameRate;
+
+					totalFrames = totalFrames / divMultiplier; //e.g 120 fps is the frame rate and total frames is 1200, then 1200 / (120 / 60) ==> 1200 / 2 ==> 600
+				}
+				else 
 				{
 					//no extra calculation required here
 					totalFrames *= 1;
-				}
-				else
-				{
-					int iFrameRate = (int)rFrameRate;
-
-					int divMultiplier = iFrameRate / 60;
-
-					totalFrames = totalFrames / divMultiplier; //e.g 120 fps is the frame rate and total frames is 1200, then 1200 / (120 / 60) ==> 1200 / 2 ==> 600
 				}
 
 				int currentFrame = 0;
@@ -625,6 +627,7 @@ public class Jav1Encoder
 	{
 		this.listener = listener;
 		this.statusListener = statusListener;
+		targetFrameRate = 60;
 		ExecCommand ffmpegCommand = new ExecCommand("ffmpeg")
 									.add("-y")
 									.add("-hide_banner")
@@ -671,7 +674,9 @@ public class Jav1Encoder
 		boolean isCopyAudio = (Boolean)ffmpegOptions.get("isCopyAudio"); //set this to false to encode audio
 
 		String pixelFormat = ffmpegOptions.get("pixelFormat").toString(); //yuv420p for SDR //change to p010le for 10 bit HDR
-		String fps = String.valueOf((Float)ffmpegOptions.get("frameRate")); //change to 60 or 30 however feels right
+		targetFrameRate = (Float)ffmpegOptions.get("frameRate");
+
+		String fps = String.valueOf(targetFrameRate); //change to 60 or 30 however feels right
 		String audioCodec = ffmpegOptions.get("audioCodec").toString();
 		String audioBitrate = ffmpegOptions.get("audioBitrate").toString(); //change to different value as needed
 		String nvidiaEncoderName = ffmpegOptions.get("videoCodec").toString(); //change to hevc_nvenc when this is missing
@@ -745,7 +750,9 @@ public class Jav1Encoder
 		boolean isCopyAudio = true; //set this to false to encode audio
 
 		String pixelFormat = "p010le"; //yuv420p for SDR //change to p010le for 10 bit HDR
-		String fps = "59.940"; //change to 60 or 30 however feels right
+
+		targetFrameRate = 60000 / 1001;
+		String fps = String.valueOf(targetFrameRate); //change to 60 or 30 however feels right
 		String audioBitrate = "384k"; //change to different value as needed
 		String nvidiaEncoderName = "av1_nvenc"; //change to hevc_nvenc when this is missing
 
