@@ -666,6 +666,7 @@ public class Jav1Encoder
 
 		boolean isGpuDecoding = (Boolean)ffmpegOptions.get("isGpuDecoding"); //set this to true to decode using gpu
 		boolean canDoSharpening = (Boolean)ffmpegOptions.get("canDoSharpening"); //set this to true to do sharpening, default do not sharpen
+		String strUnsharp = ffmpegOptions.get("unsharp").toString(); //the unsharp kernel (matrix values)
 		boolean canDoEdgeSharpening = false; //set this to true to do edge sharpening, some errors in the edge sharpening, need to fix
 		boolean isCopyAudio = (Boolean)ffmpegOptions.get("isCopyAudio"); //set this to false to encode audio
 
@@ -703,7 +704,8 @@ public class Jav1Encoder
 												.addIf(isGpuDecoding, "-hwaccel_output_format", "cuda")
 												.add("-i", inputFilename, true)
 												.addIf(!isGpuDecoding, "-pix_fmt", pixelFormat)
-												.addIf(canDoSharpening, "-filter:v", "fps="+fps+",unsharp=5:5:0.3:5:5:0.0", true)
+												//.addIf(canDoSharpening, "-filter:v", "fps="+fps+",unsharp=5:5:0.3:5:5:0.0", true)
+												.addIf(canDoSharpening, "-filter:v", "fps="+fps+",unsharp=" + strUnsharp, true)
 												.addIf(canDoEdgeSharpening, "-filter:v", "fps="+fps+",smartblur=1.5:-0.35:-3.5:0.65:0.25:2.0", true)
 												.addIf(!(canDoSharpening || canDoEdgeSharpening), "-filter:v", "fps="+fps, true)
 												.add("-progress", "-")
