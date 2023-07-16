@@ -360,23 +360,51 @@ public class App extends JFrame implements Jav1Encoder.EncoderProgressListener, 
     }
 
     @Override
-    public void onProgress(int frames, int totalFrames, double fps, double speed, int n) {
-        int percentage =  frames * 100 / totalFrames;
-        int remainingSeconds = (int)Math.round((totalFrames - frames) / (60 * speed));
+    public void onProgress(int frames, int totalFrames, double fps, double speed, int n, boolean isEnd) {
+
+        //find end marker or when the limit exceeds beyond correct frame calculation
+        if(frames > totalFrames || isEnd)
+        {
+             frames = totalFrames; //fix progress going in negative
+        }
+
+        final int percentage =  frames * 100 / totalFrames;
+        final int remainingSeconds = (int)Math.round((totalFrames - frames) / (60 * speed));
         //int secondsComplete = (int)Math.round(frames / fps);
 
-        java.time.Duration durationRemaining = java.time.Duration.ofSeconds(remainingSeconds);
+        String strProgressTextVar = "";
+        if(frames == totalFrames || isEnd || remainingSeconds == 0)
+        {
 
-        final String strProgressText =  String.format(
-            "%d %% completed [%d / %d], fps=%s, speed=%s, remaining=%s", 
-                                                                        percentage, 
-                                                                        frames, 
-                                                                        totalFrames, 
-                                                                        ""+fps, 
-                                                                        ""+speed, 
-                                                                        Jav1Encoder.format(durationRemaining)
-                                                );
-        System.out.println(strProgressText);    
+            strProgressTextVar =  String.format(
+                "%d %% completed [%d / %d], fps=%s, speed=%s, finalizing", 
+                                                                            percentage, 
+                                                                            frames, 
+                                                                            totalFrames, 
+                                                                            ""+fps, 
+                                                                            ""+speed
+                                                                            
+                                                    );
+        }
+        else
+        {
+            java.time.Duration durationRemaining = java.time.Duration.ofSeconds(remainingSeconds);
+
+            strProgressTextVar =  String.format(
+                "%d %% completed [%d / %d], fps=%s, speed=%s, remaining=%s", 
+                                                                            percentage, 
+                                                                            frames, 
+                                                                            totalFrames, 
+                                                                            ""+fps, 
+                                                                            ""+speed, 
+                                                                            Jav1Encoder.format(durationRemaining)
+                                                    );
+        }
+        
+        System.out.println(strProgressTextVar);    
+
+
+        final String strProgressText = strProgressTextVar;
 
         SwingUtilities.invokeLater(() -> {
 

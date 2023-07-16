@@ -10,7 +10,7 @@ public class Jav1Encoder
 {
     public interface EncoderProgressListener
     {
-        public void onProgress(int frames, int totalFrames, double fps, double speed, int n);
+        public void onProgress(int frames, int totalFrames, double fps, double speed, int n, boolean isEnd);
     }
 
 	public interface EncoderStatusListener
@@ -129,7 +129,7 @@ public class Jav1Encoder
 	private EncoderProgressListener listener;
 	private EncoderStatusListener statusListener;
 	private Process ffmpegProcess;
-	private HashMap<String, Integer> srcProbedValues;
+	private HashMap<String, Number> srcProbedValues;
 	private ExecCommand command;
 
 	public void updateStatus(String strStatus)
@@ -140,14 +140,15 @@ public class Jav1Encoder
 		}
 	}
 
-	public HashMap<String,Integer> probeSource(String inputFilename) throws Exception
+	public HashMap<String,Number> probeSourceCountPackets(String inputFilename) throws Exception
 	{
 
 		ExecCommand ffprobeCommand = new ExecCommand("ffprobe")
 													.add("-hide_banner")
 													.add("-loglevel", "error")
 													.add("-select_streams", "v:0")
-													.add("-show_entries", "stream=width,height,nb_frames", true)
+													.add("-count_packets")
+													.add("-show_entries", "stream=width,height,nb_read_packets,r_frame_rate", true)
 													.add("-of", "compact")
 													.add("-i",  inputFilename, true);
 										
@@ -180,7 +181,7 @@ public class Jav1Encoder
 
 		final BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-		final HashMap<String,Integer> probeValues = new HashMap<>();
+		final HashMap<String,Number> probeValues = new HashMap<>();
 
 
 		Thread t1 = new Thread(() -> {
@@ -200,11 +201,34 @@ public class Jav1Encoder
 
 					if(subTokens.length == 2)
 					{
-						try
+						String tokenName = subTokens[0];
+
+						if(tokenName.equalsIgnoreCase("r_frame_rate"))
 						{
-							probeValues.put(subTokens[0], Integer.parseInt(subTokens[1]));
+							String rFrameRate = subTokens[1];
+
+							String[] strNumeratorAndDenominator = rFrameRate.split("/");
+
+							if(strNumeratorAndDenominator.length == 2)
+							{
+								String strNumerator = strNumeratorAndDenominator[0];
+								String strDenominator = strNumeratorAndDenominator[1];
+
+								double dblFrameRate = Double.parseDouble(strNumerator) / Double.parseDouble(strDenominator);
+
+								probeValues.put("r_frame_rate", dblFrameRate);
+
+							}
+
 						}
-						catch(Exception ex) {}
+						else
+						{
+							try
+							{
+								probeValues.put(tokenName, Integer.parseInt(subTokens[1]));
+							}
+							catch(Exception ex) {}
+						}
 					}
 				}
 
@@ -224,6 +248,129 @@ public class Jav1Encoder
 		t1.start();
 
 		t1.join();
+
+		if(probeValues.containsKey("nb_read_packets"))
+		{
+			probeValues.put("nb_frames", probeValues.get("nb_read_packets"));
+		}
+
+		return probeValues;
+	}
+
+
+	public HashMap<String,Number> probeSource(String inputFilename) throws Exception
+	{
+
+		ExecCommand ffprobeCommand = new ExecCommand("ffprobe")
+													.add("-hide_banner")
+													.add("-loglevel", "error")
+													.add("-select_streams", "v:0")
+													.add("-show_entries", "stream=width,height,nb_frames,r_frame_rate", true)
+													.add("-of", "compact")
+													.add("-i",  inputFilename, true);
+										
+		System.out.println("FFProbe ExecCommand==>" + ffprobeCommand);
+
+		updateStatus(ffprobeCommand.toString());
+
+
+		final Process process = Runtime.getRuntime().exec(ffprobeCommand.toArray());
+
+		final BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
+		
+		final Thread t = new Thread(() -> {
+			try
+			{
+				for(String line = err.readLine(); line != null; line = err.readLine())
+				{
+					System.out.println("Err:"+line);
+					updateStatus("Err:" + line);
+
+				}
+			}
+			catch(final Exception ex2) {
+				ex2.printStackTrace();
+			}
+		});
+
+		t.start();
+
+		final BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+		final HashMap<String,Number> probeValues = new HashMap<>();
+
+
+		Thread t1 = new Thread(() -> {
+		try
+		{
+			String line = in.readLine();
+            
+            if(line != null)
+			{
+				System.out.println(line);
+
+				String[] tokens = line.split("\\|");
+
+				for(String token : tokens)
+				{
+					String[] subTokens = token.split("=");
+
+					if(subTokens.length == 2)
+					{
+						String tokenName = subTokens[0];
+
+						if(tokenName.equalsIgnoreCase("r_frame_rate"))
+						{
+							String rFrameRate = subTokens[1];
+
+							String[] strNumeratorAndDenominator = rFrameRate.split("/");
+
+							if(strNumeratorAndDenominator.length == 2)
+							{
+								String strNumerator = strNumeratorAndDenominator[0];
+								String strDenominator = strNumeratorAndDenominator[1];
+
+								double dblFrameRate = Double.parseDouble(strNumerator) / Double.parseDouble(strDenominator);
+
+								probeValues.put("r_frame_rate", dblFrameRate);
+
+							}
+
+						}
+						else
+						{
+							try
+							{
+								probeValues.put(tokenName, Integer.parseInt(subTokens[1]));
+							}
+							catch(Exception ex) {}
+						}
+					}
+				}
+
+				System.out.println(probeValues);
+				updateStatus(probeValues.toString());
+
+				err.close();
+			}
+
+			err.close();
+		}
+		catch(Exception ex3) {
+			ex3.printStackTrace();
+		}
+		});
+
+		t1.start();
+
+		t1.join();
+
+		if(!probeValues.containsKey("nb_frames"))
+		{
+			//since the file doesn't contain nb_frames, count it forcefully using count_packets
+			return probeSourceCountPackets(inputFilename);
+		}
 
 		return probeValues;
 	}
@@ -255,7 +402,7 @@ public class Jav1Encoder
 		t.start();
 	}
 
-	private void init(HashMap<String, Integer> srcProbedValues, ExecCommand command) throws Exception
+	private void init(HashMap<String, Number> srcProbedValues, ExecCommand command) throws Exception
 	{
 		this.srcProbedValues = srcProbedValues;
 		this.command = command;
@@ -295,7 +442,52 @@ public class Jav1Encoder
 		Thread t1 = new Thread(() -> {
 			try
 			{
-				int totalFrames = srcProbedValues.get("nb_frames");
+				boolean isTotalFramesMissing = false;
+
+				int totalFrames = 60; //to avoid showing progress bar, we hardcode totalFrames to fps 
+				double rFrameRate = 60;
+				
+				try
+				{
+					totalFrames = srcProbedValues.get("nb_frames").intValue();
+				}
+				catch(Exception ex)
+				{
+					isTotalFramesMissing = true;
+					System.out.println("nb_frames missing");
+				}
+
+				try
+				{
+					rFrameRate = srcProbedValues.get("r_frame_rate").doubleValue();
+				}
+				catch(Exception ex)
+				{
+					System.out.println("r_frame_rate missing");
+				}
+
+				//this is a temporary fix for 30 fps to 60 fps encoding, and above frame rate, this assumes 30/60/120/240 ... in between frame rate has to be supported later properly
+				if(rFrameRate <= 30)
+				{
+					int iFrameRate = (int)rFrameRate;
+
+					int multiplier = 60 / iFrameRate;
+
+					totalFrames *= multiplier; //e.g if 30 fps is the frame rate of input file, total frames is 300, then 60 / 30 is 2, so 300 * 2 or output going to be double!
+				}
+				else if(rFrameRate <= 60)
+				{
+					//no extra calculation required here
+					totalFrames *= 1;
+				}
+				else
+				{
+					int iFrameRate = (int)rFrameRate;
+
+					int divMultiplier = iFrameRate / 60;
+
+					totalFrames = totalFrames / divMultiplier; //e.g 120 fps is the frame rate and total frames is 1200, then 1200 / (120 / 60) ==> 1200 / 2 ==> 600
+				}
 
 				int currentFrame = 0;
 				String fps = "";
@@ -329,29 +521,54 @@ public class Jav1Encoder
 						case "speed":
 						{
 							speed = value;
-							if(listener != null)
+							speed = speed.replaceAll("x","");
+
+							break;
+						}
+						case "progress":
+						{
+
+							if(value.equalsIgnoreCase("continue"))
 							{
-								speed = speed.replaceAll("x","");
-								try
+								if(listener != null)
 								{
-									listener.onProgress(currentFrame, totalFrames, Double.parseDouble(fps), Double.parseDouble(speed), ++n);
-								}
-								catch(NumberFormatException ne)
+									try
+									{
+										listener.onProgress(currentFrame, isTotalFramesMissing ? (totalFrames + currentFrame) : totalFrames, Double.parseDouble(fps), Double.parseDouble(speed), ++n, false);
+									}
+									catch(NumberFormatException ne)
+									{
+										//discard
+									}
+									catch(Exception exListener)
+									{
+										exListener.printStackTrace();
+									}
+								}	
+							}
+							else
+							{
+								if(listener != null)
 								{
-									//discard
-								}
-								catch(Exception exListener)
-								{
-									exListener.printStackTrace();
-								}
-							}	
+									try
+									{
+										listener.onProgress(isTotalFramesMissing ? (totalFrames + currentFrame) : totalFrames, isTotalFramesMissing ? (totalFrames + currentFrame) : totalFrames, Double.parseDouble(fps), Double.parseDouble(speed), ++n, true);
+									}
+									catch(NumberFormatException ne)
+									{
+										//discard
+									}
+									catch(Exception exListener)
+									{
+										exListener.printStackTrace();
+									}
+								}	
+							}
 
 							//reset
 							currentFrame = 0;
 							fps = "";
 							speed = "";		
-				
-							break;
 						}
 						default:
 						{
