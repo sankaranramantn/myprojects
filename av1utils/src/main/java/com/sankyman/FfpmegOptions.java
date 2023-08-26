@@ -117,10 +117,10 @@ public class FfpmegOptions extends AbstractTableModel {
         optionsMap.put("isGpuDecoding", Boolean.valueOf(false));                //set this to true to decode using gpu
         //yuv420p for SDR //change to p010le for 10 bit HDR
         optionsMap.put("pixelFormat", new FfmpegChoices("p010le", "yuv420p", "p010le"));                            
-        optionsMap.put("frameRate", Float.valueOf(59.940f));                    //change to 60 or 30 however feels right
-        optionsMap.put("canDoSharpening", Boolean.valueOf(false));              //set this to true to do sharpening, default do not sharpen
+        optionsMap.put("frameRate", Float.valueOf(60f));                    //change to 60 or 30 however feels right
+        optionsMap.put("canDoSharpening", Boolean.valueOf(true));              //set this to true to do sharpening, default do not sharpen
         optionsMap.put("unsharp", "5:5:0.3:5:5:0.0");                       //unsharp mask in case sharpening is enabled
-        optionsMap.put("isCopyAudio", Boolean.valueOf(true));                   //set this to false to encode audio, by default audio is muxed                 
+        optionsMap.put("isCopyAudio", Boolean.valueOf(false));                   //set this to false to encode audio, by default audio is muxed                 
         
         //aac or opus, to make this work enable isCopyAudio to false
         optionsMap.put("audioCodec", new FfmpegChoices("aac", "aac", "opus"));  
@@ -130,14 +130,14 @@ public class FfpmegOptions extends AbstractTableModel {
         //this is the codec to be used
         optionsMap.put("videoCodec", new FfmpegChoices("av1_nvenc", "av1_nvenc", "hevc_nvenc", "h264_nvenc"));                          
         optionsMap.put("cq", Integer.valueOf(20));                              //cq controls the quality level, lower the value, higher the video output quality
-        optionsMap.put("maxVideoBitrate", "67M");                           //based on the cq level video will be encoded however this sets the max ceiling of the encoding output
-        optionsMap.put("gop", Integer.valueOf(59));                             //group of frames, for 60fps this should be near it, for 30 fps, 29 will be appropriate
+        optionsMap.put("maxVideoBitrate", "72M");                           //based on the cq level video will be encoded however this sets the max ceiling of the encoding output
+        optionsMap.put("gop", Integer.valueOf(60));                             //group of frames, for 60fps this should be near it, for 30 fps, 29 will be appropriate
         optionsMap.put("bFramesCount", Integer.valueOf(3));                     //number of b frames
-        optionsMap.put("isFastEncoding", Boolean.valueOf(true));                //use fast encoding to utilize dual gpu encoders of 40 series
+        optionsMap.put("isFastEncoding", Boolean.valueOf(false));                //use fast encoding to utilize dual gpu encoders of 40 series
         //whats the preset to be used, p4, p5, p6 ...
-        optionsMap.put("encoderPresetLevel", new FfmpegChoices("p4", "p1", "p2", "p3", "p4", "p5", "p6", "p7"));
+        optionsMap.put("encoderPresetLevel", new FfmpegChoices("p5", "p1", "p2", "p3", "p4", "p5", "p6", "p7"));
         //whats the tune, ll for low latency (this is auto enabled when fast gpu encoding is enabled), hq for high quality (this disables fast encoding)
-        optionsMap.put("encoderTune", new FfmpegChoices("ll", "hq", "ll", "ull"));                                
+        optionsMap.put("encoderTune", new FfmpegChoices("hq", "hq", "ll", "ull"));                                
         optionsMap.put("enforce709Colors", Boolean.valueOf(true));              //enforce bt709 colors
         optionsMap.put("isMultipass", Boolean.valueOf(true));                   //is multi pass 
         optionsMap.put("lookaheadFrames", Integer.valueOf(32));                 //how many frames to look ahead
