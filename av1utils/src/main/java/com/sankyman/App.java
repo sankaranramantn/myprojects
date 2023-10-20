@@ -310,14 +310,14 @@ public class App extends JFrame implements Jav1Encoder.EncoderProgressListener, 
                 System.out.println(selectedFile + " Does not exist");
             }
             String strInputFilename = selectedFile.getName();
-            String strOutputFilename = selectedFile.getAbsolutePath() + "-av1.mp4";
+            String strOutputFilename = selectedFile.getAbsolutePath() + "-av1.mkv";
 
             int lastDot = strInputFilename.lastIndexOf(".");
 
             if(lastDot != -1)
             {
                 String inputFilenameWithoutExt =  strInputFilename.substring(0, lastDot);
-                File fAv1OutputFile = new File(selectedFile.getParentFile(), inputFilenameWithoutExt + "-av1.mp4");
+                File fAv1OutputFile = new File(selectedFile.getParentFile(), inputFilenameWithoutExt + "-av1.mkv");
                 strOutputFilename = fAv1OutputFile.getAbsolutePath();
             }
 
